@@ -1,6 +1,11 @@
-function [best_off] =  refine_evo(Pop,Acr,re_D,parm,Incre_learning)
+%目的：将当前种群在低维空间中进行进化，然后将结果与当前最优解进行比较，得到最终最优解。
+%输出 进化后最优的解off_pop
+%输入 当前种群，档案的解，维度
+function [best_off] =  refine_evo(Pop,Acr,re_D,parm,Incre_learning,B,R1)
 N          = size(Pop.decs,1);
 Archive    = Acr;
+% MCR = zeros(20*re_D,1) + 0.2;
+% MF  = zeros(20*re_D,1) + 0.2;
 MCR  = parm.MCR;
 MF   = parm.MF;
 MOP = ones(1,5)/5;
@@ -28,13 +33,12 @@ for n=1:N
     end
 end
 % % Eigencoordinate System
-[~,I]  = sort(Pop.objs,'ascend');
-num    = N;
-TopDec = Pop(I(1:num)).decs;
-B      = orth(cov(TopDec));
-R1= deal(zeros(num-1));
-R1(logical(eye(num-1))) = rand(1,num-1);
-
+% [~,I]  = sort(Pop.objs,'ascend');
+% num    = N;
+% TopDec = Pop(I(1:num)).decs;
+% B      = orth(cov(TopDec));
+% R1= deal(zeros(num-1));
+% R1(logical(eye(num-1))) = rand(1,num-1);
 % increment learning
 incre_lable         = ones(size(Incre_learning,1),1);
 incre_Xtr           = Incre_learning;
@@ -66,7 +70,7 @@ OffDec = PopDec;
 OffDec(OP{1},:) = PopDec(OP{1},:) + F(OP{1},:).*(Xp1(OP{1},:)-PopDec(OP{1},:)+Xr1(OP{1},:)-Xr2(OP{1},:));
 OffDec(OP{2},:) = PopDec(OP{2},:) + F(OP{2},:).*(Xp1(OP{2},:)-PopDec(OP{2},:)+Xr1(OP{2},:)-Xr3(OP{2},:));
 OffDec(OP{3},:) = F(OP{3},:).*(Xr1(OP{3},:)+Xp2(OP{3},:)-Xr3(OP{3},:));
-if(size(B,2)== num-1)
+if(size(B,2)== N-1)
     OffDec(OP{4},:) = PopDec(OP{4},:) + F(OP{4},:)*B*R1*B'.*(Xp1(OP{4},:)-PopDec(OP{4},:)+Xr1(OP{4},:)-Xr3(OP{4},:));
     OffDec(OP{5},:) = F(OP{5},:)*B*R1*B'.*(Xr1(OP{5},:)+Xp2(OP{5},:)-Xr3(OP{5},:));
 else

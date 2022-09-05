@@ -1,4 +1,4 @@
-classdef SA_IMODE < ALGORITHM
+classdef SA_IMODE_2NP < ALGORITHM
 % <single> <real> <large/none> <constrained/none>
 % Improved multi-operator differential evolution
 % minN  ---   4 --- Minimum population size
@@ -41,6 +41,7 @@ classdef SA_IMODE < ALGORITHM
             for i = 1:Problem.N
                 train_data{1,i}    = init_Population(i);
             end
+            B_cal                  = 1;
             %% Optimization
             while Algorithm.NotTerminated(Population)
                 % Reduce the population size
@@ -48,7 +49,7 @@ classdef SA_IMODE < ALGORITHM
                 [~,rank]   = sort(FitnessSingle(Population));
                 Population = Population(rank(1:N));
                 Archive    = Archive(randperm(end,min(end,ceil(aRate*N))));
-                
+               if any(B_cal)
                  % Eigencoordinate System
                 [~,I]  = sort(Population.objs,'ascend');
                 num    = N;
@@ -56,6 +57,8 @@ classdef SA_IMODE < ALGORITHM
                 B      = orth(cov(TopDec));
                 R1= deal(zeros(num-1));
                 R1(logical(eye(num-1))) = rand(1,num-1);
+               else
+               end
                 % construct train set
                 train_set_uni        = [];
                 train_set            = [];
@@ -181,10 +184,12 @@ classdef SA_IMODE < ALGORITHM
                     MF(k)  = (w'*F(replace,1).^2)./(w'*F(replace,1));
                     k      = mod(k,length(MCR)) + 1;
                     cycle  = 0;
+                    B_cal  = 1;
                 else
                     cycle  = cycle+1;
                     MCR(k) = 0.5;
                     MF(k)  = 0.5;
+                    B_cal  = 0;
                 end
                 if any(cellfun(@isempty,OP))
                 	MOP = ones(1,5)/5;
@@ -193,14 +198,14 @@ classdef SA_IMODE < ALGORITHM
                     MOP = cellfun(@(S)mean(delta(S)),OP);
                     MOP = max(0.1,min(0.9,MOP./sum(MOP)));
                 end
-                 clearvars RCES_Xte RCES_row replace TopDec B
+                 clearvars RCES_Xte RCES_row replace 
                % refine the best solution
                parm.MF                             = MF;
                parm.MCR                            = MCR;
                if(Problem.FE<1*Problem.maxFE)
                    [~,rank]                        = sort(FitnessSingle(Population));
                    Population                      = Population(rank(1:N));
-                   [best_off]                      =  refine_evo(Population,Archive,Problem.D,parm,Incre_learning);
+                   [best_off]                      =  refine_evo(Population,Archive,Problem.D,parm,Incre_learning,B,R1);
                    if( FitnessSingle(Population(1)) - FitnessSingle(best_off)>0)
                        Population(N)               = best_off;
                        Archive                     = [Archive,best_off];
